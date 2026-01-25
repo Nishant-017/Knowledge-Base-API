@@ -1,0 +1,30 @@
+
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+# =========================
+venv/
+.env/
+.venv/
+# =========================
+qdrant_data/
+qdrant_storage/
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+# =========================
+.DS_Store
+Thumbs.db
+# =========================
+*.log
+.pytest_cache/
+# =========================
+build/
+dist/
+*.egg-info/
+# =========================
+.env
+.env.local
