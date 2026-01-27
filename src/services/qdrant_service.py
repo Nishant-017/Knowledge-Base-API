@@ -48,3 +48,46 @@ class QdrantService:
     )
 
         return results.points
+    
+
+
+    
+    def list_documents(self, collection_name: str):
+        points, _ = self.client.scroll(
+            collection_name=collection_name,
+            limit=1000,
+            with_payload=True,
+            with_vectors=False
+    )
+        return points
+
+    
+
+    def list_collections(self)-> list[str]:
+
+        existing = [c.name for c in self.client.get_collections().collections]
+        return existing 
+    
+    
+    def delete_collection(self,collection_name:str) -> None:
+        self.client.delete_collection(collection_name=collection_name)
+
+
+
+    def list_documents_paginated(
+        self,
+        collection_name: str,
+        limit: int = 10,
+        offset: int = 0
+        ):
+        points, next_offset = self.client.scroll(
+            collection_name=collection_name,
+            limit=limit,
+            offset=offset,
+            with_payload=True,
+            with_vectors=False
+        )
+        return {
+            "points": points,
+            "next_offset": next_offset
+        }
