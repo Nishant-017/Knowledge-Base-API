@@ -1,9 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter , HTTPException
+
 
 from src.services.embedding_service import EmbeddingGenerator
 from src.services.qdrant_service import QdrantService
 from src.models.schemas import DocumentCreate
 from src.models.schemas import SearchRequest
+from src.models.schemas import FilterSearchRequest
 
 router = APIRouter(tags=["documents"])
 
@@ -79,8 +81,10 @@ def list_collections():
 def delete_collection(collection_name:str):
 
     if collection_name not in qdrant.list_collections():
-        return{"status":"Error",
-               "message":f"{collection_name} not found"}
+        raise HTTPException(
+            status_code=404,
+            detail=f"Collection {collection_name} not found"
+        )
     
     qdrant.delete_collection(collection_name)
     return{"status":"success",
@@ -100,8 +104,10 @@ def get_documents(id:int):
                 "id":r.id,
                 "payload":r.payload
             }
-        return{"status":"Error",
-               "message":f"{id} not found"}
+    raise HTTPException (
+        status_code=404,
+        detail=f"Document with id {id} not found"
+        )
 
 
 @router.delete("/documents/{id}")
@@ -119,8 +125,10 @@ def delete_document(id:int):
             )
             return{"status":"success",
                    "message":f"Document with id {id} deleted successfully"}
-    return{"status":"Error",
-           "message":f"{id} not found"}
+    raise HTTPException(
+        status_code=404,
+        detail=f"Document with id {id} not found"
+    )
 
 
 @router.put("/documents/{id}")
@@ -154,8 +162,10 @@ def create_collection(collection_name:str,vector_size:int):
     existing = qdrant.list_collections()
 
     if collection_name in existing:
-        return{"status":"Error",
-               "message":f"Collection {collection_name} already exists"}
+        raise HTTPException(
+            status_code=409,
+            detail=f"Collection {collection_name} already exists"
+        )
 
     qdrant.ensure_collection(collection_name,vector_size)
     return{"status":"success",
@@ -183,4 +193,62 @@ def list_documents(limit: int = 10, offset: int = 0):
     return {
         "documents": formatted,
         "next_offset": result["next_offset"]
+    }
+
+
+
+
+@router.post("/search/filter")
+def filtered_search(request: FilterSearchRequest):
+    query_vector = embedder.embed_single(request.query)
+
+    results = qdrant.search_documents_with_filter(
+        collection_name=COLLECTION_NAME,
+        query_vector=query_vector,
+        limit=request.limit,
+        category=request.category,
+    )
+
+    formatted = []
+
+    for r in results:
+        formatted.append({
+            "id": r.id,
+            "score": r.score,
+            "payload": r.payload
+        })
+
+    return {"results": formatted}
+
+@router.get("/stats")
+def get_stats():
+
+    
+    total = qdrant.client.count(
+        collection_name=COLLECTION_NAME,
+        exact=True
+    ).count
+
+    
+    vector_dimension = embedder.get_dimensions()
+
+    
+    docs = qdrant.list_documents(collection_name=COLLECTION_NAME)
+
+    category_counts = {}
+
+    for d in docs:
+        category = d.payload.get("category", "unknown")
+
+        if category in category_counts:
+            category_counts[category] += 1
+        else:
+            category_counts[category] = 1
+
+    
+    return {
+        "collection": COLLECTION_NAME,
+        "total_documents": total,
+        "vector_dimension": vector_dimension,
+        "categories": category_counts
     }
