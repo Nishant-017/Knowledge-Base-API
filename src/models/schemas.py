@@ -11,3 +11,9 @@ class DocumentCreate(BaseModel):
 class SearchRequest(BaseModel):
     query: str
     limit: int = 5
+
+
+class FilterSearchRequest(BaseModel):
+    query: str
+    limit: int = 5
+    category: str
