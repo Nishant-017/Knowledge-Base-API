@@ -1,5 +1,8 @@
+# from unicodedata import category
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
+from qdrant_client.models import Filter, FieldCondition, MatchValue
+
 
 
 
@@ -91,3 +94,27 @@ class QdrantService:
             "points": points,
             "next_offset": next_offset
         }
+    
+
+
+
+
+    def search_documents_with_filter(self,collection_name: str,query_vector: list[float],limit: int,category: str):
+
+        search_filter = Filter(
+            must=[
+                FieldCondition(
+                    key="category",
+                    match=MatchValue(value=category)
+                )
+        ]
+    )
+
+        results = self.client.query_points(
+            collection_name=collection_name,
+            query=query_vector,
+            limit=limit,
+            with_payload=True,
+            query_filter=search_filter
+        )
+        return results.points
