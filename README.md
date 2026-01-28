@@ -15,13 +15,13 @@ This project demonstrates a complete vector-search backend system
 
 ## 🚀 Features
 
-✅ Add documents with embeddings
-✅ Semantic similarity search
-✅ Filtered search by category
-✅ Paginated document listing
-✅ Collection management using Qdrant
-✅ Stats endpoint (counts + categories)
-✅ Service & API test coverage
+- ✅ Add documents with embeddings
+- ✅ Semantic similarity search
+- ✅ Filtered search by category
+- ✅ Paginated document listing
+- ✅ Collection management using Qdrant
+- ✅ Stats endpoint (counts + categories)
+- ✅ Service & API test coverage
 
 ## 🧱 Tech Stack
 
