@@ -8,6 +8,13 @@ class DocumentCreate(BaseModel):
     category: str | None = None
 
 
+
+class DocumentUpdate(BaseModel):
+    title: str | None = None
+    content: str | None = None
+    category: str | None = None
+
+
 class SearchRequest(BaseModel):
     query: str
     limit: int = 5
