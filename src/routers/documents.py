@@ -3,7 +3,7 @@ from fastapi import APIRouter , HTTPException
 
 from src.services.embedding_service import EmbeddingGenerator
 from src.services.qdrant_service import QdrantService
-from src.models.schemas import DocumentCreate
+from src.models.schemas import DocumentCreate , DocumentUpdate
 from src.models.schemas import SearchRequest
 from src.models.schemas import FilterSearchRequest
 
@@ -18,21 +18,34 @@ COLLECTION_NAME = "kb_embedded"
 
 @router.post("/documents")
 def create_document(doc: DocumentCreate):
-    # 1) get embedding dimension & ensure collection exists
+
+    # 1️⃣ Ensure collection exists
     dims = embedder.get_dimensions()
     qdrant.ensure_collection(COLLECTION_NAME, dims)
 
-    # 2) generate embedding for content
+    
+    existing_docs = qdrant.list_documents(
+        collection_name=COLLECTION_NAME
+    )
+
+    for r in existing_docs:
+        if r.id == doc.id:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Document with id {doc.id} already exists"
+            )
+
+    # 3️⃣ Generate embedding
     vector = embedder.embed_single(doc.content)
 
-    # 3) prepare payload
+    # 4️⃣ Prepare payload
     payload = {
         "title": doc.title,
         "content": doc.content,
         "category": doc.category
     }
 
-    # 4) store in Qdrant
+    # 5️⃣ Store in Qdrant
     qdrant.add_document(
         collection_name=COLLECTION_NAME,
         doc_id=doc.id,
@@ -40,7 +53,11 @@ def create_document(doc: DocumentCreate):
         payload=payload
     )
 
-    return {"status": "success", "message": "Document stored successfully"}
+    return {
+        "status": "success",
+        "message": "Document stored successfully"
+    }
+
 
 
 
@@ -132,7 +149,7 @@ def delete_document(id:int):
 
 
 @router.put("/documents/{id}")
-def update_document(id:int,doc:DocumentCreate):
+def update_document(id:int,doc:DocumentUpdate):
     results=qdrant.list_documents(
         collection_name=COLLECTION_NAME
     )
